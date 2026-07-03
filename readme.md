@@ -30,14 +30,14 @@ It supports:
 Run the bellow command to import it in your project
 
 ```bash
-go get github.com/vrianta/golang/gonfig/v1
+go get github.com/vrianta/gonfig/v1
 ```
 
 To use this you have to import it
 
 ```go
 import (
-    gonfig "github.com/vrianta/golang/gonfig/v1"
+    gonfig "github.com/vrianta/gonfig/v1"
 )
 ```
 
@@ -48,7 +48,7 @@ package main
 
 import (
     "fmt"
-    gonfig "github.com/vrianta/golang/gonfig/v1"
+    gonfig "github.com/vrianta/gonfig/v1"
 )
 
 var Flags = gonfig.New[struct {
