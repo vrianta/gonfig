@@ -17,7 +17,7 @@
 
 ## Overview
 
-Use `gonfig.New[T](crach of issue)` to walk a struct and populate exported fields from tags.
+Use `gonfig.New[T](crach if issue)` to walk a struct and populate exported fields from tags.
 It supports:
 
 - `env` — read values from environment variables
@@ -30,7 +30,7 @@ It supports:
 Run the bellow command to import it in your project
 
 ```bash
-go get github.com/vrianta/gonfig/v1
+go get github.com/vrianta/gonfig/v1@v1.1.0
 ```
 
 To use this you have to import it
