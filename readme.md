@@ -11,7 +11,7 @@
   - [`arg`](#arg)
   - [`default`](#default)
   - [`required`](#required)
-- [Behavior](#behavior)
+- [**Behavior**](#**Behavior**)
 - [Examples](#examples)
 - [Notes](#notes)
 
@@ -69,15 +69,15 @@ func main() {
 
 Reads a value from an environment variable.
 
-- Syntax: `` `env:"ENV_NAME"` ``
-- Behavior: if the environment variable exists and contains a value, it is parsed and assigned to the field.
+- **Syntax**: `` `env:"ENV_NAME"` ``
+- **Behavior**: if the environment variable exists and contains a value, it is parsed and assigned to the field.
 - Supported target types: `string`, `bool`, signed/unsigned integers, `float32`/`float64`, and `time.Duration`.
 
 ### `arg`
 
 Reads a value from command-line arguments.
 
-- Syntax: `` `arg:"flag"` ``
+- **Syntax**: `` `arg:"flag"` ``
 - Supported CLI forms:
   - `--flag=value`
   - `-flag=value`
@@ -90,18 +90,26 @@ Reads a value from command-line arguments.
 
 Provides a fallback value when neither `env` nor `arg` supplies a value.
 
-- Syntax: `` `default:"value"` ``
-- Behavior: if earlier tags do not populate the field, `default` is assigned.
+- **Syntax**: `` `default:"value"` ``
+- **Behavior**: if earlier tags do not populate the field, `default` is assigned.
 - Supported target types: `string`, `bool`, signed/unsigned integers, `float32`/`float64`, and `time.Duration`.
 
 ### `required`
 
 Ensures a field has a non-zero value after parsing.
 
-- Syntax: `` `required:"true"` `` or simply `` `required:""` ``
-- Behavior: if the field remains zero-valued after parsing, `Parse` returns an error or panics when `crashOnFail` is `true`.
+- **Syntax**: `` `required:"true"` `` or simply `` `required:""` ``
+- **Behavior**: if the field remains zero-valued after parsing, `Parse` returns an error or panics when `crashOnFail` is `true`.
 
-## Behavior
+### `description`
+
+Provides inline documentation for a configuration option.
+
+- **Syntax**: `description:"Detailed field description"`
+- **Behavior**: attaches descriptive help text to the field, which is rendered in the CLI help table when `--help` or `-help` is passed.
+- **Supported target types**: applicable to any struct field.
+
+## **Behavior**
 
 `Parse[T any](ctx *T, crashOnFail bool)` expects a non-nil pointer to a struct.
 
@@ -111,6 +119,7 @@ Processing order inside each struct field:
 2. `arg`
 3. `default`
 4. `required`
+5. `description`
 
 Nested structs are processed recursively.
 
@@ -150,6 +159,7 @@ Supported CLI forms:
 - `./app --verbose`
 - `./app --verbose=true`
 - `./app -verbose true`
+- `./app -verbose=true`
 
 ### Default values
 
