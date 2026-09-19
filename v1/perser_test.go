@@ -1,6 +1,7 @@
 package structparser
 
 import (
+	"fmt"
 	"os"
 	"testing"
 )
@@ -16,6 +17,18 @@ type TestConfig struct {
 	Debug        bool   `arg:"debug" default:"false"`
 	Retries      int    `arg:"retries" default:"3"`
 	RequiredTest string `required:"true"`
+}
+
+type StructWithPrivate struct {
+	PublicField  string `default:"public"`
+	privateField string `default:"private"` // Unexported field
+}
+
+type StructWithPointers struct {
+	Host    *string `env:"HOST" default:"localhost"`
+	Port    *int    `default:"8080"`
+	Debug   *bool   `default:"true"`
+	Timeout *string `env:"TIMEOUT"` // Should remain nil if not set
 }
 
 // PrivateConfig is used to test the unexported/private field error rule.
@@ -137,6 +150,7 @@ func TestParse_CoreLogic(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			origArgs := os.Args
 			if tt.setupArgs != nil {
+				args_scanned = false
 				os.Args = tt.setupArgs
 			}
 			defer func() {
@@ -200,4 +214,84 @@ func TestParse_EdgeCases(t *testing.T) {
 			t.Errorf("expected error %q, got: %v", expectedErr, err)
 		}
 	})
+}
+
+// ----------------------------------------------------------------------
+// Test Suite: Private Fields and Pointer Types
+// ----------------------------------------------------------------------
+
+// 1. Test Private / Unexported Fields handling
+func TestParse_PrivateFields(t *testing.T) {
+	t.Run("Error: Reject struct containing unexported private field", func(t *testing.T) {
+		cfg := &StructWithPrivate{}
+		_, err := Parse(cfg, false)
+
+		if err == nil {
+			t.Fatal("expected error for private field, got nil")
+		}
+
+		expectedErr := "field privateField is not public"
+		if err.Error() != expectedErr {
+			t.Errorf("expected error %q, got %q", expectedErr, err.Error())
+		}
+	})
+}
+
+// 2. Test Pointer Struct Fields
+func TestParse_PointerFields(t *testing.T) {
+	origArgs := os.Args
+	defer func() { os.Args = origArgs }()
+	os.Args = []string{"cmd"}
+
+	t.Run("Success: Populate pointer fields with defaults and envs", func(t *testing.T) {
+		t.Setenv("HOST", "127.0.0.1")
+
+		cfg := &StructWithPointers{}
+		_, err := Parse(cfg, false)
+		if err != nil {
+			t.Fatalf("unexpected error parsing pointer fields: %v", err)
+		}
+
+		// Verify Host (Overridden by Env)
+		if cfg.Host == nil || *cfg.Host != "127.0.0.1" {
+			t.Errorf("expected Host pointer to be '127.0.0.1', got %v", derefString(cfg.Host))
+		}
+
+		// Verify Port (Default Value)
+		if cfg.Port == nil || *cfg.Port != 8080 {
+			t.Errorf("expected Port pointer to be 8080, got %v", derefInt(cfg.Port))
+		}
+
+		// Verify Debug (Default Value)
+		if cfg.Debug == nil || *cfg.Debug != true {
+			t.Errorf("expected Debug pointer to be true, got %v", derefBool(cfg.Debug))
+		}
+
+		// Verify Timeout (Unset, should remain nil)
+		if cfg.Timeout != nil {
+			t.Errorf("expected Timeout pointer to remain nil, got %q", *cfg.Timeout)
+		}
+	})
+}
+
+// Helper dereferencing functions for clean test output
+func derefString(s *string) string {
+	if s == nil {
+		return "<nil>"
+	}
+	return *s
+}
+
+func derefInt(i *int) string {
+	if i == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("%d", *i)
+}
+
+func derefBool(b *bool) string {
+	if b == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("%t", *b)
 }
