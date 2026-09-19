@@ -1,4 +1,4 @@
-package structparser
+package gonfig
 
 import (
 	"os"
