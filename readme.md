@@ -35,7 +35,7 @@ See the [Wiki](https://github.com/vrianta/gonfig/wiki) for more detailed documen
 Install the v1 package with:
 
 ```bash
-go get github.com/vrianta/gonfig/v1@v1.1.0
+go get github.com/vrianta/gonfig/v1@v1.1
 ```
 
 Import it in your Go code with:
