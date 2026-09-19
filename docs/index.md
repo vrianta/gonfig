@@ -12,7 +12,7 @@ Gonfig is a small, dependency-free Go configuration library for populating struc
 
 [Get started](#quick-start) · [API reference](#api-reference) · [GitHub](https://github.com/vrianta/gonfig)
 
-> Current release: **v1.1** · Requires **Go 1.24.3 or later**
+> Current release: **v1.1.1** · Requires **Go 1.24.3 or later**
 
 ## Why Gonfig?
 
@@ -28,7 +28,7 @@ Define configuration once in a Go struct and let Gonfig resolve values from fami
 ## Installation
 
 ```bash
-go get github.com/vrianta/gonfig/v1@v1.1
+go get github.com/vrianta/gonfig/v1@v1.1.1
 ```
 
 Import the v1 package with the recommended alias:
@@ -205,4 +205,4 @@ cfg := gonfig.New[Config](true)
 
 ## License and source
 
-Gonfig is maintained at [github.com/vrianta/gonfig](https://github.com/vrianta/gonfig). See the [v1.1 release](https://github.com/vrianta/gonfig/releases/tag/v1.1) for the current release notes.
+Gonfig is released under the [MIT License](https://github.com/vrianta/gonfig/blob/main/LICENSE). The project is maintained at [github.com/vrianta/gonfig](https://github.com/vrianta/gonfig). See the [v1.1.1.1 release](https://github.com/vrianta/gonfig/releases/tag/v1.1.1.1) for the current release notes.
