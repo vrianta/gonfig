@@ -91,7 +91,11 @@ func parseArg(flagKey string, fieldVal *reflect.Value, fieldType *reflect.Struct
 	return nil
 }
 
-// ParseOSArgs scans os.Args and populates the global args map.
+// ParseOSArgs scans os.Args and caches command-line arguments for Parse and New.
+//
+// It supports --flag=value, -flag=value, --flag value, -flag value, and
+// boolean flags such as --debug. Arguments without a leading dash are ignored.
+// Calling ParseOSArgs more than once has no effect after the first scan.
 func ParseOSArgs() {
 	if args_scanned {
 		return

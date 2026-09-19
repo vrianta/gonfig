@@ -1,39 +1,44 @@
 ![Gonfig Banner](./assets/gonfig-banner.png)
 
-`gonfig` is a small Go library for populating struct fields from environment variables, command-line arguments, and default values.
+`gonfig` is a small Go configuration library for populating Go struct fields from environment variables, command-line arguments, and default values.
 
 ## Table of Contents
 
 - [Overview](#overview)
-- [Usage](#usage)
+- [Quick start](#quick-start)
 - [Available Tags](#available-tags)
   - [`env`](#env)
   - [`arg`](#arg)
   - [`default`](#default)
-  - [`required`](#required)
-- [**Behavior**](#**Behavior**)
+    - [`required`](#required)
+    - [`description`](#description)
+- [Behavior](#behavior)
+- [Command-line help](#command-line-help)
 - [Examples](#examples)
 - [Notes](#notes)
 
 ## Overview
 
-Use `gonfig.New[T](crach if issue)` to walk a struct and populate exported fields from tags.
+Use `gonfig.New[T](crashOnFail)` to create a configuration value and populate its exported fields from tags. Use `gonfig.Parse` when your application needs to handle errors explicitly.
 It supports:
 
 - `env` — read values from environment variables
 - `arg` — read values from CLI flags
 - `default` — populate fallback values
 - `required` — validate fields are not zero values
+- `description` — add field descriptions to generated help output
+
+See the [Wiki](https://github.com/vrianta/gonfig/wiki) for more detailed documentation.
 
 ## How to import it
 
-Run the bellow command to import it in your project
+Install the v1 package with:
 
 ```bash
 go get github.com/vrianta/gonfig/v1@v1.1.0
 ```
 
-To use this you have to import it
+Import it in your Go code with:
 
 ```go
 import (
@@ -41,7 +46,7 @@ import (
 )
 ```
 
-## Usage
+## Quick start
 
 ```go
 package main
@@ -51,17 +56,19 @@ import (
     gonfig "github.com/vrianta/gonfig/v1"
 )
 
-var Flags = gonfig.New[struct {
-	Host   string `env:"APP_HOST" arg:"host" default:"localhost"`
-	Port   int    `env:"APP_PORT" default:"8080"`
-	Debug  bool   `arg:"debug" default:"false"`
-	ApiKey string `env:"APP_API_KEY" arg:"apikey" required:""`
-}](true) // true means crash if any error came
-
 func main() {
-	fmt.Println(Flags.Host)
+    cfg := gonfig.New[struct {
+        Host   string `env:"APP_HOST" arg:"host" default:"localhost"`
+        Port   int    `env:"APP_PORT" default:"8080"`
+        Debug  bool   `arg:"debug" default:"false"`
+        APIKey string `env:"APP_API_KEY" required:"true"`
+    }](true)
+
+    fmt.Println(cfg.Host, cfg.Port, cfg.Debug)
 }
 ```
+
+The `true` argument makes a missing required field panic. Set it to `false` and use `Parse` when you want to handle the returned error yourself.
 
 ## Available Tags
 
@@ -71,7 +78,7 @@ Reads a value from an environment variable.
 
 - **Syntax**: `` `env:"ENV_NAME"` ``
 - **Behavior**: if the environment variable exists and contains a value, it is parsed and assigned to the field.
-- Supported target types: `string`, `bool`, signed/unsigned integers, `float32`/`float64`, and `time.Duration`.
+- Supported target types include `string`, `bool`, signed/unsigned integers, `float32`, `float64`, `time.Duration`, and pointers to these types.
 
 ### `arg`
 
@@ -84,7 +91,7 @@ Reads a value from command-line arguments.
   - `--flag value`
   - `-flag value`
   - boolean flags without explicit values are treated as `true`
-- Supported target types: `string`, `bool`, signed/unsigned integers, `float32`/`float64`, and `time.Duration`.
+- Supported target types include `string`, `bool`, signed/unsigned integers, `float32`, `float64`, `time.Duration`, and pointers to these types.
 
 ### `default`
 
@@ -92,7 +99,7 @@ Provides a fallback value when neither `env` nor `arg` supplies a value.
 
 - **Syntax**: `` `default:"value"` ``
 - **Behavior**: if earlier tags do not populate the field, `default` is assigned.
-- Supported target types: `string`, `bool`, signed/unsigned integers, `float32`/`float64`, and `time.Duration`.
+- Supported target types include `string`, `bool`, signed/unsigned integers, `float32`, `float64`, `time.Duration`, and pointers to these types.
 
 ### `required`
 
@@ -105,23 +112,22 @@ Ensures a field has a non-zero value after parsing.
 
 Provides inline documentation for a configuration option.
 
-- **Syntax**: `description:"Detailed field description"`
+- **Syntax**: `` `description:"Detailed field description"` ``
 - **Behavior**: attaches descriptive help text to the field, which is rendered in the CLI help table when `--help` or `-help` is passed.
 - **Supported target types**: applicable to any struct field.
 
-## **Behavior**
+## Behavior
 
 `Parse[T any](ctx *T, crashOnFail bool)` expects a non-nil pointer to a struct.
 
-Processing order inside each struct field:
+For each exported, non-struct field, values are resolved in this order:
 
 1. `env`
 2. `arg`
 3. `default`
 4. `required`
-5. `description`
 
-Nested structs are processed recursively.
+`description` is metadata used only for help output. Nested structs are processed recursively. Pointer fields are allocated when a value is supplied and remain nil when no value is supplied.
 
 ### Error handling
 
@@ -130,20 +136,32 @@ Nested structs are processed recursively.
 - If `required` is present and the field is still zero-valued, `Parse` returns an error.
 - If `crashOnFail` is `true`, the missing required field causes a panic instead.
 
+`New` returns a value of type `T` and does not return an error. Use `Parse(&cfg, false)` when parsing errors must be handled explicitly.
+
+## Command-line help
+
+Passing `-help` or `--help` prints a table containing field names, flags, environment variables, defaults, required status, and descriptions.
+
+```shell
+./app --help
+```
+
+Supported argument forms include `--flag=value`, `--flag value`, `-flag=value`, `-flag value`, and boolean flags such as `--debug`.
+
 ## Examples
 
 ### Environment variables
 
 ```go
 var Config = gonfig.New[struct {
-    ApiKey string `env:"APP_API_KEY" required:"true"`
+    APIKey string `env:"APP_API_KEY" required:"true"`
     Host   string `env:"APP_HOST" default:"localhost"`
 }](true)
 ```
 
 If `APP_API_KEY` is set and `APP_HOST` is not, the result is:
 
-- `ApiKey` from environment
+- `APIKey` from environment
 - `Host` = `localhost`
 
 ### Command-line arguments
@@ -166,7 +184,7 @@ Supported CLI forms:
 ```go
 var Config = gonfig.New[struct {
     Mode string `default:"production"`
-}](true);
+}](true)
 ```
 
 If no `env` or `arg` value is provided, `Mode` becomes `production`.
@@ -175,7 +193,7 @@ If no `env` or `arg` value is provided, `Mode` becomes `production`.
 
 ```go
 var Config = gonfig.New[struct {
-    ApiKey string `env:"APP_API_KEY" required:"true"`
+    APIKey string `env:"APP_API_KEY" required:"true"`
 }](true)
 ```
 
@@ -187,3 +205,4 @@ If `APP_API_KEY` is missing, `Parse(cfg, false)` returns an error.
 - `time.Duration` strings must use Go duration syntax, e.g. `"30s"` or `"5m"`.
 - If both `env` and `arg` are configured for a field, the library tries `env` first, then `arg`, then `default`.
 - `required` validation is evaluated after all tag parsing.
+- `ParseOSArgs` scans command-line arguments once and caches the results.

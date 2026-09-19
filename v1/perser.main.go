@@ -6,16 +6,28 @@ import (
 	"reflect"
 )
 
+// New creates and populates a configuration value of type T.
+//
+// The value is populated from environment variables, command-line arguments,
+// and default tags in that order. If crashOnFail is true, a missing required
+// field causes New to panic. When crashOnFail is false, parsing errors are not
+// returned; use Parse when the caller needs to inspect errors.
 func New[T any](crashOnFail bool) T {
 	var cfg T
 	_, _ = Parse(&cfg, crashOnFail)
 	return cfg
 }
 
-/*
-Parse receives a pointer to a struct, iterates through its fields,
-and populates them based on env, arg, default, and required tags.
-*/
+// Parse populates the exported fields of a struct from its configuration tags.
+//
+// ctx must be a non-nil pointer to a struct. Environment variables take
+// precedence over command-line arguments, which take precedence over default
+// values. Nested structs are processed recursively, and pointer fields are
+// allocated when a value is provided.
+//
+// Parse returns an error for invalid input, unexported fields, and missing
+// required fields. If crashOnFail is true, a missing required field causes a
+// panic instead of returning an error.
 func Parse[T any](ctx *T, crashOnFail bool) (*T, error) {
 
 	val := reflect.ValueOf(ctx)
