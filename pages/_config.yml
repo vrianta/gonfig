@@ -1,0 +1,6 @@
+title: Gonfig
+description: Small Go configuration library for environment variables, CLI flags, defaults, and required values.
+url: https://vrianta.github.io
+theme: jekyll-theme-cayman
+show_downloads: false
+markdown: kramdown
